@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Cargill Keyword Automation</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000000;
+            color: #008544;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .centered {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            height: auto;
+            max-width: 80px;
+            z-index: 100;
+        }
+        #loaderContainer {
+            width: 80%;
+            background-color: #1e293b;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        #loaderBar {
+            height: 30px;
+            width: 0%;
+            background-color: #008544;
+            transition: width 3s linear;
+        }
+        #message, #startButton {
+            display: none;
+            text-align: center;
+        }
+        #message {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #008544;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #restartButton {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            background-color: #1e293b;
+            color: #008544;
+            border: 1px solid #008544;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #terminal {
+            display: none;
+            width: 90%;
+            height: 60vh;
+            background-color: #000;
+            color: #00ff00;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #00ff00;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        #logOutput, #feedbackOutput {
+            flex: 1;
+            height: 100%;
+            overflow-y: auto;
+        }
+        #feedbackOutput {
+            color: #008544;
+            border-left: 1px solid #008544;
+            padding-left: 20px;
+        }
+        .chat-interface {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            width: 350px;
+            height: 400px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+        .chat-header {
+            background-color: #004c00;
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        .close-chat-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+        }
+        .chat-input-container {
+            padding: 10px;
+            display: flex;
+        }
+        .chat-input-container input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .chat-input-container button {
+            background-color: #004c00;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .chat-message-user {
+            text-align: right;
+            margin-bottom: 8px;
+        }
+        .chat-message-ai {
+            text-align: left;
+            margin-bottom: 8px;
+        }
+        .chat-message-user .message-bubble {
+            background-color: #e0f7fa;
+            padding: 8px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .chat-message-ai .message-bubble {
+            background-color: #f1f1f1;
+            padding: 8px 12px;
+            border-radius: 15px;
+            display: inline-block;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .glasses-button {
+            position: fixed;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            background-color: #004c00;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <img alt="Cargill Logo" id="logo" src="https://logos-world.net/wp-content/uploads/2022/06/Cargill-Symbol.png">
+    <button id="restartButton">Restart</button>
+    <div class="centered" id="mainContent">
+        <div id="loaderContainer">
+            <div id="loaderBar" style="transition: width 3s linear; width: 100%; display: none;"></div>
+        </div>
+        <div id="message" style="display: block;">K.E.Y.S. – Knowledge Engine for Yielding Signals</div>
+        <button id="startButton" style="display: inline-block;">Start</button>
+        <div id="terminal" style="display: none;">
+            <div id="logOutput"></div>
+            <div id="feedbackOutput"></div>
+        </div>
+    </div>
+    <button id="glassesButton" class="glasses-button">👓</button>
+    <div id="chatInterface" class="chat-interface">
+        <div class="chat-header">
+            <h3>Cargill AI Assistant</h3>
+            <button class="close-chat-btn" id="closeChatBtn">&times;</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message-ai">
+                <div class="message-bubble">Hello! I am here to help with questions about Cargill products. What would you like to know about our animal feed</div>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Ask about animal feed...">
+            <button id="sendChatBtn">Send</button>
+            <button id="clearChatBtn">Clear</button>
+        </div>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Elements
+    const loaderBar = document.getElementById('loaderBar');
+    const message = document.getElementById('message');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const terminal = document.getElementById('terminal');
+    const logOutput = document.getElementById('logOutput');
+    const feedbackOutput = document.getElementById('feedbackOutput');
+
+    // Fake logs & feedback suggestions
+    const fakeLogs = [
+        "Connecting to Twitter API...",
+        "Fetching recent tweets mentioning 'product feedback'...",
+        "Analyzing sentiment from Threads posts...",
+        "Scanning Reddit discussions for keyword matches...",
+        "Extracting user complaints from forums...",
+        "Compiling feedback summary...",
+        "Looping back to Twitter...",
+        "Rechecking Threads for new posts...",
+        "Updating keyword database...",
+        "Monitoring live feedback streams..."
+    ];
+
+    const feedbackSuggestions = [
+        "Improve sustainability messaging for animal feed.",
+        "Highlight traceability in cocoa sourcing.",
+        "Add nutritional info to corn syrup packaging.",
+        "Promote regenerative agriculture partnerships.",
+        "Clarify labeling on soybean oil products.",
+        "Expand plant-based protein product line.",
+        "Enhance transparency in palm oil sourcing.",
+        "Offer more gluten-free grain options.",
+        "Increase visibility of food safety certifications.",
+        "Showcase carbon reduction in logistics."
+    ];
+
+    let logInterval, feedbackInterval;
+
+    function startLoading() {
+        loaderBar.style.display = 'block';
+        loaderBar.style.transition = 'none';
+        loaderBar.style.width = '0%';
+        loaderBar.offsetHeight; // trigger reflow to reset transition
+        loaderBar.style.transition = 'width 3s linear';
+        loaderBar.style.width = '100%';
+
+        message.style.display = 'none';
+        startButton.style.display = 'none';
+        terminal.style.display = 'none';
+        logOutput.innerText = '';
+        feedbackOutput.innerText = '';
+        clearInterval(logInterval);
+        clearInterval(feedbackInterval);
+
+        setTimeout(() => {
+            loaderBar.style.display = 'none';
+            message.style.display = 'block';
+            startButton.style.display = 'inline-block';
+        }, 3000);
+    }
+
+    function startTerminal() {
+        message.style.display = 'none';
+        startButton.style.display = 'none';
+        terminal.style.display = 'flex';
+        logOutput.innerText = '';
+        feedbackOutput.innerText = '';
+        let logIndex = 0;
+        let feedbackIndex = 0;
+
+        logInterval = setInterval(() => {
+            logOutput.innerText += fakeLogs[logIndex % fakeLogs.length] + "\n";
+            logOutput.scrollTop = logOutput.scrollHeight;
+            logIndex++;
+        }, 1000);
+
+        feedbackInterval = setInterval(() => {
+            feedbackOutput.innerText += feedbackSuggestions[feedbackIndex % feedbackSuggestions.length] + "\n";
+            feedbackOutput.scrollTop = feedbackOutput.scrollHeight;
+            feedbackIndex++;
+        }, 1500);
+    }
+
+    // Attach event listeners
+    startButton.addEventListener('click', startTerminal);
+    restartButton.addEventListener('click', () => {
+        startLoading();
+    });
+
+    // Initial load
+    startLoading();
+
+    // Chat interface elements
+    const glassesButton = document.getElementById("glassesButton");
+    const chatInterface = document.getElementById("chatInterface");
+    const closeChatBtn = document.getElementById("closeChatBtn");
+    const sendChatBtn = document.getElementById("sendChatBtn");
+    const chatInput = document.getElementById("chatInput");
+    const chatMessages = document.getElementById("chatMessages");
+    const clearChatBtn = document.getElementById("clearChatBtn");
+
+    // Updated faqResponses with no apostrophes & simple tone
+    const faqResponses = {
+        "whats in our chicken feed": "Our poultry feed includes corn, soybean meal, vitamins, and minerals.",
+        "do we have non gmo options": "Yes, we offer non GMO feed options for different animals.",
+        "how should feed be stored": "Keep feed in a cool, dry spot in sealed containers.",
+        "how long does feed last": "Most feed lasts 3 to 6 months depending on the type.",
+        "can i get the nutrition details": "Yes, we provide full nutrition info on all feed products upon request.",
+        "what ingredients are in the cattle feed": "Cattle feed contains corn, hay, soybean meal, and added minerals for growth.",
+        "how can we improve feed quality": "We look to enhance feed quality by adding more natural supplements and reducing additives.",
+        "are there any organic feed options": "Yes, we have some organic feed blends certified for livestock.",
+        "how do we handle feed storage safety": "Feed is stored in sealed containers to prevent moisture and contamination.",
+        "can we reduce feed waste": "Yes, by improving feed packaging and portion control, waste can be minimized.",
+        "what are common feed issues customers report": "Customers often report mold concerns and inconsistent pellet sizes."
+    };
+
+    function sendMessage() {
+        const userMessage = chatInput.value.trim();
+        if (!userMessage) return;
+
+        // Show user message
+        const userMessageEl = document.createElement("div");
+        userMessageEl.className = "chat-message-user";
+        userMessageEl.innerHTML = `<div class="message-bubble">${userMessage}</div>`;
+        chatMessages.appendChild(userMessageEl);
+
+        chatInput.value = "";
+
+        setTimeout(() => {
+            const aiMessageEl = document.createElement("div");
+            aiMessageEl.className = "chat-message-ai";
+
+            const lowerMessage = userMessage.toLowerCase();
+
+            let aiResponse = "Thank you for your message. We will get back to you shortly.";
+
+            // If user types "cheez-it", show list of questions
+            if (lowerMessage === "cheez-it") {
+                aiResponse = 
+                "Here are some example questions you can ask about animal feed:\n" +
+                "- whats in our chicken feed\n" +
+                "- do we have non gmo options\n" +
+                "- how should feed be stored\n" +
+                "- how long does feed last\n" +
+                "- can i get the nutrition details\n" +
+                "- what ingredients are in the cattle feed\n" +
+                "- how can we improve feed quality\n" +
+                "- are there any organic feed options\n" +
+                "- how do we handle feed storage safety\n" +
+                "- can we reduce feed waste\n" +
+                "- what are common feed issues customers report";
+            } else if (faqResponses[lowerMessage]) {
+                aiResponse = faqResponses[lowerMessage];
+            }
+
+            aiMessageEl.innerHTML = `<div class="message-bubble">${aiResponse.replace(/\n/g,"<br>")}</div>`;
+            chatMessages.appendChild(aiMessageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 500);
+    }
+
+    glassesButton.addEventListener("click", function () {
+        chatInterface.style.display = "flex";
+        chatInput.focus();
+    });
+
+    closeChatBtn.addEventListener("click", function () {
+        chatInterface.style.display = "none";
+    });
+
+    sendChatBtn.addEventListener("click", sendMessage);
+
+    chatInput.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    clearChatBtn.addEventListener("click", function () {
+        chatMessages.innerHTML = `<div class="chat-message-ai"><div class="message-bubble">Hello! I am here to help with questions about Cargill products. What would you like to know about our animal feed</div></div>`;
+        chatInput.value = "";
+    });
+});
+</script>
+</body>
+</html>
