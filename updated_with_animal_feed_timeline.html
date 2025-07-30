@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Cargill Keyword Automation</title>
+<style>
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #000000;
+      color: #008544;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      height: 40px;
+    }
+
+    #loaderContainer {
+      width: 80%;
+      background-color: #1e293b;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    #loaderBar {
+      height: 30px;
+      width: 0%;
+      background-color: #008544;
+      transition: width 3s linear;
+    }
+
+    #message, #startButton {
+      display: none;
+      text-align: center;
+    }
+
+    #message {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+
+    #startButton {
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #008544;
+      color: #ffffff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #restartButton {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      font-size: 0.9em;
+      background-color: #1e293b;
+      color: #008544;
+      border: 1px solid #008544;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #terminal {
+      display: none;
+      width: 90%;
+      height: 60vh;
+      background-color: #000;
+      color: #00ff00;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 0.9em;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #00ff00;
+      white-space: pre-wrap;
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    #logOutput, #feedbackOutput {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    #feedbackOutput {
+      color: #008544;
+      border-left: 1px solid #008544;
+      padding-left: 20px;
+    }
+  
+#rightArrow {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 24px;
+    padding: 10px 15px;
+    display: none;
+    z-index: 1000;
+}
+#analyticsScreen {
+    display: none;
+    text-align: center;
+    padding: 50px;
+}
+</style>
+<script>
+function restartPage() {
+    location.reload();
+}
+</script></head>
+<body><div id="loadingBarContainer" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 5px; background-color: #ccc; z-index: 9999;"><div id="loadingBar" style="width: 0%; height: 100%; background-color: #4caf50; transition: width 1s;"></div></div>
+<img alt="Cargill Logo" id="logo" src="https://logos-world.net/wp-content/uploads/2022/06/Cargill-Symbol.png"/>
+<button id="restartButton" onclick="restartPage()">Restart</button>
+<div class="centered" id="mainContent">
+<div id="loaderContainer">
+<div id="loaderBar"></div>
+</div>
+<div id="message">K.E.Y.S. – Knowledge Engine for Yielding Signals</div>
+<button id="startButton">Start</button>
+<div id="terminal">
+<div id="logOutput"></div>
+<div id="feedbackOutput"></div>
+</div>
+</div>
+<script>
+    const loaderBar = document.getElementById('loaderBar');
+    const message = document.getElementById('message');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const terminal = document.getElementById('terminal');
+    const logOutput = document.getElementById('logOutput');
+    const feedbackOutput = document.getElementById('feedbackOutput');
+
+    const fakeLogs = [
+      "Connecting to Twitter API...",
+      "Fetching recent tweets mentioning 'product feedback'...",
+      "Analyzing sentiment from Threads posts...",
+      "Scanning Reddit discussions for keyword matches...",
+      "Extracting user complaints from forums...",
+      "Compiling feedback summary...",
+      "Looping back to Twitter...",
+      "Rechecking Threads for new posts...",
+      "Updating keyword database...",
+      "Monitoring live feedback streams..."
+    ];
+
+    const feedbackSuggestions = [
+      "Improve sustainability messaging for animal feed.",
+      "Highlight traceability in cocoa sourcing.",
+      "Add nutritional info to corn syrup packaging.",
+      "Promote regenerative agriculture partnerships.",
+      "Clarify labeling on soybean oil products.",
+      "Expand plant-based protein product line.",
+      "Enhance transparency in palm oil sourcing.",
+      "Offer more gluten-free grain options.",
+      "Increase visibility of food safety certifications.",
+      "Showcase carbon reduction in logistics."
+    ];
+
+    let logInterval, feedbackInterval;
+
+    function startLoading() {
+      loaderBar.style.transition = 'none';
+      loaderBar.style.width = '0%';
+      loaderBar.offsetHeight;
+      loaderBar.style.transition = 'width 3s linear';
+      loaderBar.style.width = '100%';
+
+      message.style.display = 'none';
+      startButton.style.display = 'none';
+      terminal.style.display = 'none';
+      logOutput.innerText = '';
+      feedbackOutput.innerText = '';
+      clearInterval(logInterval);
+      clearInterval(feedbackInterval);
+
+      setTimeout(() => {
+        loaderBar.style.display = 'none';
+        message.style.display = 'block';
+        startButton.style.display = 'inline-block';
+      }, 3000);
+    }
+
+    function startTerminal() {
+      message.style.display = 'none';
+      startButton.style.display = 'none';
+      terminal.style.display = 'flex';
+      logOutput.innerText = '';
+      feedbackOutput.innerText = '';
+      let logIndex = 0;
+      let feedbackIndex = 0;
+
+      logInterval = setInterval(() => {
+        logOutput.innerText += fakeLogs[logIndex % fakeLogs.length] + "\n";
+        logOutput.scrollTop = logOutput.scrollHeight;
+        logIndex++;
+      }, 1000);
+
+      feedbackInterval = setInterval(() => {
+        feedbackOutput.innerText += feedbackSuggestions[feedbackIndex % feedbackSuggestions.length] + "\n";
+        feedbackOutput.scrollTop = feedbackOutput.scrollHeight;
+        feedbackIndex++;
+      }, 1500);
+    }
+
+    startButton.addEventListener('click', startTerminal);
+    restartButton.addEventListener('click', () => {
+      loaderBar.style.display = 'block';
+      startLoading();
+    });
+
+    window.onload = startLoading;
+  
+document.addEventListener("DOMContentLoaded", function() {
+    const startButton = document.getElementById("startButton");
+    const restartButton = document.getElementById("restartButton");
+    const rightArrow = document.getElementById("rightArrow");
+    const mainContent = document.getElementById("mainContent");
+    const analyticsScreen = document.getElementById("analyticsScreen");
+
+    if (startButton) {
+        startButton.addEventListener("click", function() {
+            rightArrow.style.display = "block";
+        });
+    }
+
+    if (restartButton) {
+        restartButton.addEventListener("click", function() {
+            rightArrow.style.display = "none";
+            analyticsScreen.style.display = "none";
+            if (mainContent) mainContent.style.display = "block";
+        });
+    }
+
+    if (rightArrow) {
+        rightArrow.addEventListener("click", function() {
+            if (mainContent) mainContent.style.display = "none";
+            analyticsScreen.style.display = "block";
+        });
+    }
+});
+
+function showLoadingBar(callback) {
+    const barContainer = document.getElementById('loadingBarContainer');
+    const bar = document.getElementById('loadingBar');
+    barContainer.style.display = 'block';
+    bar.style.width = '0%';
+    setTimeout(() => {
+        bar.style.width = '100%';
+    }, 50);
+    setTimeout(() => {
+        barContainer.style.display = 'none';
+        bar.style.width = '0%';
+        if (callback) callback();
+    }, 1050);
+}
+
+let currentSlide = 0;
+function nextSlide() {
+    showLoadingBar(advanceSlide);
+}
+function advanceSlide() {
+    currentSlide++;
+    updateSlide();
+}
+function updateSlide() {
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach((slide, index) => {
+        slide.style.display = index === currentSlide ? 'block' : 'none';
+    });
+}
+</script>
+<div style="position: fixed; bottom: 10px; right: 10px; font-size: 0.8em; color: gray;">This program is to be used only in Cargill offices and only for Cargill-related business.</div><footer style="position: fixed; bottom: 0; width: 100%; background-color: #004c00; color: white; text-align: center; padding: 10px; font-size: 0.9em;">Version 1.0.0 | Contact: IT Support | Cargill Internal Use Only</footer><button id="rightArrow">→</button><div id="analyticsScreen" style="display:none;">
+<h2>Test Analytic Results for Cargill</h2>
+<ul style="text-align: left; display: inline-block;">
+<li>Feed Composition Analysis: High fiber content reducing digestibility.</li>
+<li>Moisture Level Testing: Inconsistent moisture levels affecting shelf life.</li>
+<li>Nutrient Deficiency: Lack of essential amino acids in current formulations.</li>
+<li>Contaminant Screening: Trace levels of aflatoxins detected in corn-based feed.</li>
+<li>Palatability Trials: Low intake observed in poultry feed trials.</li>
+<li>Cost Efficiency Metrics: High production cost per nutrient unit.</li>
+<li>Improvement Suggestion: Reformulate with enzyme additives to enhance digestibility.</li>
+<li>Improvement Suggestion: Introduce moisture control packaging.</li>
+<li>Improvement Suggestion: Optimize ingredient sourcing for cost and quality.</li>
+</ul>
+<div id="timeline" style="margin-top: 40px; text-align: center;">
+<h2 style="color: #007A33;">Cargill Product Improvement Timeline</h2>
+<div style="display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif;">
+<div style="background-color: #007A33; color: white; padding: 10px 20px; margin: 10px; border-radius: 5px; width: 60%;">
+      Q1 2023: Initial feed quality assessment and lab testing
+    </div>
+<div style="background-color: #000000; color: white; padding: 10px 20px; margin: 10px; border-radius: 5px; width: 60%;">
+      Q2 2023: Reformulation of feed ingredients and pilot testing
+    </div>
+<div style="background-color: #007A33; color: white; padding: 10px 20px; margin: 10px; border-radius: 5px; width: 60%;">
+      Q3 2023: Field trials and performance monitoring
+    </div>
+<div style="background-color: #000000; color: white; padding: 10px 20px; margin: 10px; border-radius: 5px; width: 60%;">
+      Q4 2023: Final adjustments and rollout of improved feed
+    </div>
+</div>
+<div class="timeline-entry"><h3>Animal Feed Improvement</h3><p>Issue Identified: Excessive Dustiness</p><p>Step 1: Dust Control Formulation</p><p>Step 2: Pilot Testing</p><p>Step 3: Final Rollout</p></div></div>
+</div></body>
+</html>
